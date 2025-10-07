@@ -115,9 +115,10 @@ function App() {
                   <TableBody>
                     {templateHeaders.map((target) => {
                       const rule = mapping[target] ?? { kind: 'none' };
+                      const matched = isRuleMatched(rule);
                       return (
-                        <TableRow key={target} hover>
-                          <TableCell>
+                        <TableRow key={target} hover sx={matched ? { backgroundColor: 'rgba(76,175,80,0.06)' } : undefined}>
+                          <TableCell sx={matched ? { borderLeft: '3px solid', borderLeftColor: 'success.main' } : undefined}>
                             {rule.kind === 'split_name' ? (
                               <Box display="flex" gap={2} alignItems="center">
                                 <FormControl size="small" sx={{ minWidth: 240 }}>
@@ -239,7 +240,19 @@ function App() {
                                   renderValue={(val) =>
                                     !val ? <span style={{ color: '#d32f2f' }}>No match</span> : String(val)
                                   }
-                                  sx={{ '& .MuiSelect-select': { color: rule.kind === 'direct' && (rule as any).source ? 'inherit' : 'error.main' } }}
+                                  sx={{
+                                    '& .MuiSelect-select': {
+                                      color: rule.kind === 'direct' && (rule as any).source ? 'inherit' : 'error.main',
+                                      bgcolor: rule.kind === 'direct' && (rule as any).source ? 'rgba(76,175,80,0.12)' : undefined,
+                                      borderRadius: 1,
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      borderColor: rule.kind === 'direct' && (rule as any).source ? 'success.main' : undefined,
+                                    },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                      borderColor: rule.kind === 'direct' && (rule as any).source ? 'success.dark' : undefined,
+                                    },
+                                  }}
                                 >
                                   <MenuItem value="">
                                     <em>No match</em>
@@ -332,6 +345,19 @@ function App() {
 
     </Container>
   );
+  function isRuleMatched(rule: MappingRule): boolean {
+    switch (rule.kind) {
+      case 'direct':
+        return Boolean((rule as any).source);
+      case 'split_name':
+        return Boolean((rule as any).source);
+      case 'concat':
+        return Array.isArray((rule as any).sources) && (rule as any).sources.length > 0;
+      default:
+        return false;
+    }
+  }
+
 }
 
 function findDefaultNameColumn(headers: string[]): string | undefined {
