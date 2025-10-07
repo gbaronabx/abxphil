@@ -120,16 +120,16 @@ function App() {
 
   const currentAnchor = typeof window !== 'undefined' ? (document.getElementById(tourSteps[tourStep]?.anchorId) as HTMLElement | null) : null;
 
-  return (
-      <AppBar position="static" color="primary" sx={{ mb: 2 }}>
-        <Toolbar variant="dense" sx={{ minHeight: 44 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            AkitaBox Phil — CSV Mapper
-          </Typography>
-          <Box flexGrow={1} />
-          <Button color="inherit" size="small" onClick={() => { setTourStep(0); setTourOpen(true); }}>Walkthrough</Button>
-        </Toolbar>
-      </AppBar>
+  return (<>
+    <AppBar position="static" color="primary" sx={{ mb: 2 }}>
+      <Toolbar variant="dense" sx={{ minHeight: 44 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          AkitaBox Phil — CSV Mapper
+        </Typography>
+        <Box flexGrow={1} />
+        <Button color="inherit" size="small" onClick={() => { setTourStep(0); setTourOpen(true); }}>Walkthrough</Button>
+      </Toolbar>
+    </AppBar>
 
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <Typography variant="h4" gutterBottom>
@@ -474,6 +474,8 @@ function App() {
 
 
     </Container>
+  </>
+
   );
   function isRuleMatched(rule: MappingRule): boolean {
     switch (rule.kind) {
