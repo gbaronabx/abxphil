@@ -7,12 +7,12 @@ export async function parseCsvFile(file: File): Promise<ParsedCsv> {
       header: true,
       skipEmptyLines: true,
       dynamicTyping: false,
-      complete: (results) => {
+      complete: (results: any) => {
         const rows = (results.data as RowObject[]).filter(Boolean);
-        const headers = results.meta.fields ?? inferHeadersFromRows(rows);
+        const headers = results.meta?.fields ?? inferHeadersFromRows(rows);
         resolve({ headers: headers ?? [], rows: rows.map(cleanUndefinedToEmpty) });
       },
-      error: (err) => reject(err),
+      error: (err: any) => reject(err),
     });
   });
 }
