@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
-import { Backdrop, Box, Button, Chip, Container, FormControl, InputLabel, MenuItem, Paper, Popover, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { AppBar, Backdrop, Box, Button, Chip, Container, FormControl, InputLabel, MenuItem, Paper, Popover, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Toolbar, Typography } from '@mui/material';
 import { parseCsvFile, unparseCsv } from './utils/csv';
 import type { Mapping, MappingRule, ParsedCsv, RowObject } from './types';
 import { applyMapping, autoMap } from './utils/mapping';
@@ -23,6 +23,25 @@ function App() {
     { anchorId: 'btn-upload-save', title: 'Restore a Save', body: 'Re-upload a saved mapping to instantly restore all matches and rules.' },
     { anchorId: 'btn-export', title: 'Export Mapped CSV', body: 'When ready, export a new CSV that matches your template with all rules applied.' },
   ];
+
+  // Auto-start walkthrough on first visit
+  useEffect(() => {
+    try {
+      const key = 'abxphil_walkthrough_seen_v1';
+      const seen = localStorage.getItem(key);
+      if (!seen) {
+        setTourStep(0);
+        setTourOpen(true);
+      }
+    } catch { }
+  }, []);
+
+  function markWalkthroughSeen() {
+    try {
+      localStorage.setItem('abxphil_walkthrough_seen_v1', '1');
+    } catch { }
+  }
+
 
 
   // Initialize automap when both CSVs are available
@@ -102,6 +121,16 @@ function App() {
   const currentAnchor = typeof window !== 'undefined' ? (document.getElementById(tourSteps[tourStep]?.anchorId) as HTMLElement | null) : null;
 
   return (
+      <AppBar position="static" color="primary" sx={{ mb: 2 }}>
+        <Toolbar variant="dense" sx={{ minHeight: 44 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            AkitaBox Phil — CSV Mapper
+          </Typography>
+          <Box flexGrow={1} />
+          <Button color="inherit" size="small" onClick={() => { setTourStep(0); setTourOpen(true); }}>Walkthrough</Button>
+        </Toolbar>
+      </AppBar>
+
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <Typography variant="h4" gutterBottom>
 
@@ -112,6 +141,7 @@ function App() {
         <Button id="btn-upload-template" variant="contained" component="label" color="primary">
           Upload Template CSV
           <input
+
             hidden
             type="file"
             accept=".csv,text/csv"
@@ -425,13 +455,14 @@ function App() {
           <Stack direction="row" gap={1} alignItems="center">
             <Button size="small" disabled={tourStep === 0} onClick={() => setTourStep((s) => Math.max(0, s - 1))}>Back</Button>
             <Box flexGrow={1} />
+            <Button size="small" color="secondary" onClick={() => { markWalkthroughSeen(); setTourOpen(false); }}>Don't show again</Button>
             <Button size="small" onClick={() => setTourOpen(false)}>Close</Button>
             <Button
               size="small"
               variant="contained"
               onClick={() => {
                 if (tourStep < tourSteps.length - 1) setTourStep((s) => s + 1);
-                else setTourOpen(false);
+                else { markWalkthroughSeen(); setTourOpen(false); }
               }}
             >
               {tourStep < tourSteps.length - 1 ? 'Next' : 'Done'}
