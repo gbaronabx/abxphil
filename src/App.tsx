@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
-import { Box, Button, Chip, Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Backdrop, Box, Button, Chip, Container, FormControl, InputLabel, MenuItem, Paper, Popover, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { parseCsvFile, unparseCsv } from './utils/csv';
 import type { Mapping, MappingRule, ParsedCsv, RowObject } from './types';
 import { applyMapping, autoMap } from './utils/mapping';
@@ -12,6 +12,17 @@ function App() {
   const [templateCsv, setTemplateCsv] = useState<ParsedCsv | null>(null);
   const [dataCsv, setDataCsv] = useState<ParsedCsv | null>(null);
   const [mapping, setMapping] = useState<Mapping>({});
+
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+  const tourSteps = [
+    { anchorId: 'btn-upload-template', title: 'Upload Template CSV', body: 'Choose your destination field list (the template) to define the columns you want to produce.' },
+    { anchorId: 'btn-upload-data', title: 'Upload Data CSV', body: 'Select the source data you want to map into the template.' },
+    { anchorId: 'mapping-table', title: 'Map Fields', body: 'Use the Source dropdowns and rules (Direct, Split Name, Concatenate) to align columns. Matched rows are highlighted in green.' },
+    { anchorId: 'btn-save-mapping', title: 'Save Your Work', body: 'Download a mapping file so you can resume later or share with teammates.' },
+    { anchorId: 'btn-upload-save', title: 'Restore a Save', body: 'Re-upload a saved mapping to instantly restore all matches and rules.' },
+    { anchorId: 'btn-export', title: 'Export Mapped CSV', body: 'When ready, export a new CSV that matches your template with all rules applied.' },
+  ];
 
 
   // Initialize automap when both CSVs are available
@@ -88,14 +99,17 @@ function App() {
   const templateHeaders = templateCsv?.headers ?? [];
 
 
+  const currentAnchor = typeof window !== 'undefined' ? (document.getElementById(tourSteps[tourStep]?.anchorId) as HTMLElement | null) : null;
+
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <Typography variant="h4" gutterBottom>
+
         AkitaBox Phil — CSV Mapper
       </Typography>
 
       <Box display="flex" gap={2} alignItems="center" mb={3}>
-        <Button variant="contained" component="label" color="primary">
+        <Button id="btn-upload-template" variant="contained" component="label" color="primary">
           Upload Template CSV
           <input
             hidden
@@ -108,7 +122,7 @@ function App() {
           {templateCsv ? `${templateHeaders.length} fields` : 'No template uploaded'}
         </Typography>
 
-        <Button variant="contained" component="label" color="secondary">
+        <Button id="btn-upload-data" variant="contained" component="label" color="secondary">
           Upload Data CSV
           <input
             hidden
@@ -122,10 +136,13 @@ function App() {
         </Typography>
 
         <Box flexGrow={1} />
-        <Button variant="outlined" onClick={saveMappingFile} disabled={Object.keys(mapping).length === 0}>
+        <Button variant="text" onClick={() => { setTourStep(0); setTourOpen(true); }}>
+          Walkthrough
+        </Button>
+        <Button id="btn-save-mapping" variant="outlined" onClick={saveMappingFile} disabled={Object.keys(mapping).length === 0}>
           Save Mapping
         </Button>
-        <Button variant="outlined" component="label">
+        <Button id="btn-upload-save" variant="outlined" component="label">
           Upload Save
           <input
             hidden
@@ -134,7 +151,7 @@ function App() {
             onChange={(e) => onUploadSaveSelected(e.target.files?.[0])}
           />
         </Button>
-        <Button variant="contained" onClick={exportCsv} disabled={!templateCsv || !dataCsv}>
+        <Button id="btn-export" variant="contained" onClick={exportCsv} disabled={!templateCsv || !dataCsv}>
           Export
         </Button>
       </Box>
@@ -147,7 +164,7 @@ function App() {
               <Typography variant="h6" gutterBottom>
                 Template Mapping
               </Typography>
-              <TableContainer component={Paper}>
+              <TableContainer id="mapping-table" component={Paper}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -385,6 +402,44 @@ function App() {
 
         </Box>
       )}
+
+      {/* Walkthrough Backdrop and Popover */}
+      <Backdrop open={tourOpen} sx={{ zIndex: (theme) => theme.zIndex.modal - 1, backgroundColor: 'rgba(0,0,0,0.35)' }} onClick={() => setTourOpen(false)} />
+      <Popover
+        open={tourOpen}
+        anchorEl={currentAnchor}
+        onClose={() => setTourOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+      >
+        <Box p={2} maxWidth={360}>
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            Step {tourStep + 1} of {tourSteps.length}
+          </Typography>
+          <Typography variant="h6" gutterBottom>
+            {tourSteps[tourStep]?.title}
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            {tourSteps[tourStep]?.body}
+          </Typography>
+          <Stack direction="row" gap={1} alignItems="center">
+            <Button size="small" disabled={tourStep === 0} onClick={() => setTourStep((s) => Math.max(0, s - 1))}>Back</Button>
+            <Box flexGrow={1} />
+            <Button size="small" onClick={() => setTourOpen(false)}>Close</Button>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={() => {
+                if (tourStep < tourSteps.length - 1) setTourStep((s) => s + 1);
+                else setTourOpen(false);
+              }}
+            >
+              {tourStep < tourSteps.length - 1 ? 'Next' : 'Done'}
+            </Button>
+          </Stack>
+        </Box>
+      </Popover>
+
 
 
     </Container>
