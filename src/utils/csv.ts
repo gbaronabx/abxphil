@@ -3,7 +3,7 @@ import type { ParsedCsv, RowObject } from '../types';
 
 export async function parseCsvFile(file: File): Promise<ParsedCsv> {
   return new Promise((resolve, reject) => {
-    Papa.parse<RowObject>(file, {
+    Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       dynamicTyping: false,
