@@ -1,0 +1,50 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy on push to main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Trigger Railway deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
+        run: |
+          # Deploy using the Dockerfile in the repo. The CLI will trigger a remote build on Railway.
+          # If you have a single service in the project, SERVICE_ID can be omitted.
+          if [ -n "$RAILWAY_ENVIRONMENT_ID" ]; then
+            railway environment $RAILWAY_ENVIRONMENT_ID
+          fi
+          if [ -n "$RAILWAY_PROJECT_ID" ] && [ -n "$RAILWAY_SERVICE_ID" ]; then
+            railway up --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --detach
+          elif [ -n "$RAILWAY_PROJECT_ID" ]; then
+            railway up --project $RAILWAY_PROJECT_ID --detach
+          else
+            railway up --detach
+          fi
+
+      - name: Post-deploy URL
+        if: always()
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Deployment triggered. Check Railway dashboard for build and URL."
+
