@@ -166,9 +166,6 @@ function App() {
         </Typography>
 
         <Box flexGrow={1} />
-        <Button variant="text" onClick={() => { setTourStep(0); setTourOpen(true); }}>
-          Walkthrough
-        </Button>
         <Button id="btn-save-mapping" variant="outlined" onClick={saveMappingFile} disabled={Object.keys(mapping).length === 0}>
           Save Mapping
         </Button>
