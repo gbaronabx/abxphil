@@ -30,14 +30,14 @@ export function autoMap(templateHeaders: string[], sourceHeaders: string[]): Map
     // 1) Exact raw (case-insensitive)
     const exact = normSource.find((s) => s.raw.toLowerCase() === target.toLowerCase());
     if (exact) {
-      mapping[target] = { kind: 'direct', source: exact.raw };
+      mapping[target] = { kind: 'direct', source: exact.raw, origin: 'auto' };
       continue;
     }
 
     // 2) Exact normalized
     const exactNorm = normSource.find((s) => s.norm === tNorm);
     if (exactNorm) {
-      mapping[target] = { kind: 'direct', source: exactNorm.raw };
+      mapping[target] = { kind: 'direct', source: exactNorm.raw, origin: 'auto' };
       continue;
     }
 
@@ -49,6 +49,7 @@ export function autoMap(templateHeaders: string[], sourceHeaders: string[]): Map
           kind: 'split_name',
           source: nameCol.raw,
           part: tNorm === 'firstname' ? 'first' : 'last',
+          origin: 'auto',
         };
         continue;
       }
@@ -61,7 +62,7 @@ export function autoMap(templateHeaders: string[], sourceHeaders: string[]): Map
       if (!best || score > best.score) best = { s: s.raw, score };
     }
     if (best && best.score >= 0.6) {
-      mapping[target] = { kind: 'direct', source: best.s };
+      mapping[target] = { kind: 'direct', source: best.s, origin: 'auto' };
     } else {
       mapping[target] = { kind: 'none' };
     }

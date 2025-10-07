@@ -18,7 +18,7 @@ function App() {
   const tourSteps = [
     { anchorId: 'btn-upload-template', title: 'Upload Template CSV', body: 'Choose your destination field list (the template) to define the columns you want to produce.' },
     { anchorId: 'btn-upload-data', title: 'Upload Data CSV', body: 'Select the source data you want to map into the template.' },
-    { anchorId: 'mapping-table', title: 'Map Fields', body: 'Use the Source dropdowns and rules (Direct, Split Name, Concatenate) to align columns. Matched rows are highlighted in green.' },
+    { anchorId: 'mapping-table', title: 'Map Fields', body: 'Use the Source dropdowns and rules (Direct, Split Name, Concatenate) to align columns. Auto-matches are green; your manual matches are yellow.' },
     { anchorId: 'btn-save-mapping', title: 'Save Your Work', body: 'Download a mapping file so you can resume later or share with teammates.' },
     { anchorId: 'btn-upload-save', title: 'Restore a Save', body: 'Re-upload a saved mapping to instantly restore all matches and rules.' },
     { anchorId: 'btn-export', title: 'Export Mapped CSV', body: 'When ready, export a new CSV that matches your template with all rules applied.' },
@@ -71,7 +71,7 @@ function App() {
   }
 
   function updateRule(target: string, rule: MappingRule) {
-    setMapping((m) => ({ ...m, [target]: rule }));
+    setMapping((m) => ({ ...m, [target]: { ...(rule as any), origin: 'manual' } as any }));
   }
 
 
@@ -204,9 +204,10 @@ function App() {
                     {templateHeaders.map((target) => {
                       const rule = mapping[target] ?? { kind: 'none' };
                       const matched = isRuleMatched(rule);
+                      const manual = matched && (rule as any).origin === 'manual';
                       return (
-                        <TableRow key={target} hover sx={matched ? { backgroundColor: 'rgba(76,175,80,0.06)' } : undefined}>
-                          <TableCell sx={matched ? { borderLeft: '3px solid', borderLeftColor: 'success.main' } : undefined}>
+                        <TableRow key={target} hover sx={matched ? { backgroundColor: manual ? 'rgba(255,193,7,0.10)' : 'rgba(76,175,80,0.06)' } : undefined}>
+                          <TableCell sx={matched ? { borderLeft: '3px solid', borderLeftColor: manual ? 'warning.main' : 'success.main' } : undefined}>
                             {rule.kind === 'split_name' ? (
                               <Box display="flex" gap={2} alignItems="center">
                                 <FormControl size="small" sx={{ minWidth: 240 }}>
@@ -221,6 +222,19 @@ function App() {
                                         part: (mapping[target] as any)?.part || guessPart(target),
                                       })
                                     }
+                                    sx={{
+                                      '& .MuiSelect-select': {
+                                        color: (rule as any).source ? 'inherit' : 'error.main',
+                                        bgcolor: (rule as any).source ? (manual ? 'rgba(255,193,7,0.12)' : 'rgba(76,175,80,0.12)') : undefined,
+                                        borderRadius: 1,
+                                      },
+                                      '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: (rule as any).source ? (manual ? 'warning.main' : 'success.main') : undefined,
+                                      },
+                                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: (rule as any).source ? (manual ? 'warning.dark' : 'success.dark') : undefined,
+                                      },
+                                    }}
                                   >
                                     {sourceHeaders.map((s) => (
                                       <MenuItem key={s} value={s}>
@@ -257,7 +271,7 @@ function App() {
                                       onDelete={() => {
                                         setMapping((m) => {
                                           const r = (m[target] as any) || { kind: 'concat', sources: [] };
-                                          const next = { ...r, sources: r.sources.filter((x: string) => x !== s) };
+                                          const next = { ...r, sources: r.sources.filter((x: string) => x !== s), origin: 'manual' };
                                           return { ...m, [target]: next };
                                         });
                                       }}
@@ -283,6 +297,7 @@ function App() {
                                             ...r,
                                             kind: 'concat',
                                             sources: exists ? r.sources : [...r.sources, val],
+                                            origin: 'manual',
                                           };
                                           return { ...m, [target]: next };
                                         });
@@ -307,7 +322,7 @@ function App() {
                                       const sep = e.target.value;
                                       setMapping((m) => {
                                         const r = (m[target] as any) || { kind: 'concat', sources: [] };
-                                        const next = { ...r, kind: 'concat', separator: sep };
+                                        const next = { ...r, kind: 'concat', separator: sep, origin: 'manual' };
                                         return { ...m, [target]: next };
                                       });
                                     }}
@@ -331,14 +346,14 @@ function App() {
                                   sx={{
                                     '& .MuiSelect-select': {
                                       color: rule.kind === 'direct' && (rule as any).source ? 'inherit' : 'error.main',
-                                      bgcolor: rule.kind === 'direct' && (rule as any).source ? 'rgba(76,175,80,0.12)' : undefined,
+                                      bgcolor: rule.kind === 'direct' && (rule as any).source ? (manual ? 'rgba(255,193,7,0.12)' : 'rgba(76,175,80,0.12)') : undefined,
                                       borderRadius: 1,
                                     },
                                     '& .MuiOutlinedInput-notchedOutline': {
-                                      borderColor: rule.kind === 'direct' && (rule as any).source ? 'success.main' : undefined,
+                                      borderColor: rule.kind === 'direct' && (rule as any).source ? (manual ? 'warning.main' : 'success.main') : undefined,
                                     },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                      borderColor: rule.kind === 'direct' && (rule as any).source ? 'success.dark' : undefined,
+                                      borderColor: rule.kind === 'direct' && (rule as any).source ? (manual ? 'warning.dark' : 'success.dark') : undefined,
                                     },
                                   }}
                                 >
