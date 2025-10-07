@@ -52,6 +52,38 @@ function App() {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     saveAs(blob, 'mapped.csv');
   }
+  function saveMappingFile() {
+    const payload = {
+      version: 1,
+      templateHeaders: templateCsv?.headers ?? [],
+      sourceHeaders: dataCsv?.headers ?? [],
+      mapping,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+    saveAs(blob, 'mapping.abxphil.json');
+  }
+
+  async function onUploadSaveSelected(file?: File | null) {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const loaded: Mapping = parsed?.mapping ?? parsed;
+      // Filter to current template headers if available
+      const allowed = templateCsv?.headers;
+      const next: Mapping = {};
+      if (loaded && typeof loaded === 'object') {
+        const keys = allowed ?? Object.keys(loaded);
+        for (const k of keys) {
+          if ((loaded as any)[k]) next[k] = (loaded as any)[k] as any;
+        }
+        setMapping(next);
+      }
+    } catch (e) {
+      console.error('Failed to load saved mapping', e);
+    }
+  }
+
   const sourceHeaders = dataCsv?.headers ?? [];
   const templateHeaders = templateCsv?.headers ?? [];
 
@@ -90,7 +122,19 @@ function App() {
         </Typography>
 
         <Box flexGrow={1} />
-        <Button variant="outlined" onClick={exportCsv} disabled={!templateCsv || !dataCsv}>
+        <Button variant="outlined" onClick={saveMappingFile} disabled={Object.keys(mapping).length === 0}>
+          Save Mapping
+        </Button>
+        <Button variant="outlined" component="label">
+          Upload Save
+          <input
+            hidden
+            type="file"
+            accept=".json,.abxphil,.abxphil.json,application/json"
+            onChange={(e) => onUploadSaveSelected(e.target.files?.[0])}
+          />
+        </Button>
+        <Button variant="contained" onClick={exportCsv} disabled={!templateCsv || !dataCsv}>
           Export
         </Button>
       </Box>
